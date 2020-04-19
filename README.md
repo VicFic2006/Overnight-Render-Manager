@@ -6,4 +6,4 @@ A laptop may run out of battery or if it's plugged in, It may cuase battery to o
 
 That's where this programme comes in. The Overnight Render Manager let's you manage your blender renders and shutdown the pc after all the renders.
 
-NOTE: This programme is currently in its beta and it is only available as cli programme, no gui has yet been made for this programme
+NOTE: This programme is currently in its pre-alpha and it is only available as cli programme, no gui has yet been made for this programme

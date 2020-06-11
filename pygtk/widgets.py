@@ -2,6 +2,8 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
+from typing import List
+
 class NumberEntry(Gtk.Entry):
     def __init__(self):
         Gtk.Entry.__init__(self)
@@ -14,7 +16,6 @@ class NumberEntry(Gtk.Entry):
 
 def create_label(text: str):
     label = Gtk.Label(label=text)
-    label.set_halign(Gtk.Align.CENTER)
     return label
 
 
@@ -23,13 +24,11 @@ def create_entry(numbers_only=True):
         entry = NumberEntry()
     else:
         entry = Gtk.Entry()
-    entry.set_halign(Gtk.Align.CENTER)
     return entry
 
 
 def create_button(text: str):
     button = Gtk.Button(label=text)
-    button.set_halign(Gtk.Align.CENTER)
     return button
 
 
@@ -46,4 +45,16 @@ def create_file_chooser_dialog(self):
         )
     )
     return file_chooser_dialog
+
+
+def create_combo_box(labels: List[str]):
+    model = Gtk.ListStore(str)
+    combo_box = Gtk.ComboBox.new_with_model(model)
+    for i in range(len(labels)):
+        model.append([labels[i]])
+    renderer_text = Gtk.CellRendererText()
+    combo_box.pack_start(renderer_text, True)
+    combo_box.add_attribute(renderer_text, "text", 0)
+    combo_box.set_active(0)
+    return combo_box
 

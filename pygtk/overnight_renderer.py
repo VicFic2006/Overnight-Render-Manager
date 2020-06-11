@@ -3,18 +3,21 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
 import os
+import time
 
 from widgets import create_label, create_entry, create_button, \
-create_file_chooser_dialog, create_combo_box
+create_file_chooser_dialog, create_combo_box, create_check_button
 
 class MainWindow(Gtk.Window):
     grid = Gtk.Grid(column_spacing=12, row_spacing=12)
 
     location_entry = None
     output_type_combo_box = None
+    shutdown_check_button = None
 
     location = ""
     output_type = ""
+    shutdown = False
 
 
     def __init__(self):
@@ -37,6 +40,9 @@ class MainWindow(Gtk.Window):
         output_types = ["Animation", "Single Frame"]
         self.output_type_combo_box = create_combo_box(output_types)
 
+        shutdown_label = create_label("Shutdown after rendering is finished")
+        self.shutdown_check_button = create_check_button()
+
         render_button = create_button("Render")
         render_button.connect("clicked", self.on_render_clicked)
 
@@ -48,7 +54,9 @@ class MainWindow(Gtk.Window):
         self.grid.attach(location_button, 2, 0, 1, 1)
         self.grid.attach(output_type_label, 0, 1, 1, 1)
         self.grid.attach(self.output_type_combo_box, 1, 1, 1, 1)
-        self.grid.attach(render_button, 0, 2, 2, 1)
+        self.grid.attach(shutdown_label, 0, 2, 1, 1)
+        self.grid.attach(self.shutdown_check_button, 1, 2, 1, 1)
+        self.grid.attach(render_button, 0, 3, 2, 1)
 
     def on_location_clicked(self, button: Gtk.Button) -> None:
         file_chooser_dialog = create_file_chooser_dialog(self)
@@ -77,6 +85,7 @@ class MainWindow(Gtk.Window):
         if output_type_iter is not None:
             model = self.output_type_combo_box.get_model()
             self.output_type = model[output_type_iter][0]
+        self.shutdown = self.shutdown_check_button.get_active()
         self.render()
 
     def render(self) -> None:
@@ -89,7 +98,13 @@ class MainWindow(Gtk.Window):
             os.system("blender -b {} -f 1".format(os.path.basename(self.location)))
 
         print("Rendering complete!")
-        os.system("notify-send 'Rendering {} complete. Shutting down in 30 seconds'".format(self.location))
+        if self.shutdown:
+            os.system("notify-send 'Rendering {} complete. Shutting down in 30 seconds'".format(self.location))
+            time.sleep(30)
+            print("Shutting down...")
+            os.system("poweroff")
+        else:
+            os.system("notify-send 'Rendering {} complete.'".format(self.location))
 
 
 main_window = MainWindow()

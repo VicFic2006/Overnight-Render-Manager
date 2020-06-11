@@ -58,3 +58,6 @@ def create_combo_box(labels: List[str]) -> Gtk.ComboBox:
     combo_box.set_active(0)
     return combo_box
 
+def create_check_button() -> Gtk.CheckButton:
+    check_button = Gtk.CheckButton()
+    return check_button

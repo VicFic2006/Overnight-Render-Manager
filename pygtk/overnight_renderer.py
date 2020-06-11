@@ -2,6 +2,8 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
+import os
+
 from widgets import create_label, create_entry, create_button, \
 create_file_chooser_dialog, create_combo_box
 
@@ -24,7 +26,7 @@ class MainWindow(Gtk.Window):
         
         self.create_content()
 
-    def create_content(self):
+    def create_content(self) -> None:
         location_label = create_label("Path to .blend file")
         self.location_entry = create_entry(False)
         self.location_entry.set_width_chars(30)
@@ -48,7 +50,7 @@ class MainWindow(Gtk.Window):
         self.grid.attach(self.output_type_combo_box, 1, 1, 1, 1)
         self.grid.attach(render_button, 0, 2, 2, 1)
 
-    def on_location_clicked(self, button: Gtk.Button):
+    def on_location_clicked(self, button: Gtk.Button) -> None:
         file_chooser_dialog = create_file_chooser_dialog(self)
 
         self.add_filters(file_chooser_dialog)
@@ -57,27 +59,37 @@ class MainWindow(Gtk.Window):
 
         if response == Gtk.ResponseType.OK:
             self.location_entry.set_text(file_chooser_dialog.get_filename())
-            self.location = file_chooser_dialog.get_filename()
         elif response == Gtk.ResponseType.CANCEL:
-            print("Canceled")
+            pass
 
         file_chooser_dialog.destroy()
 
-    def on_render_clicked(self, button: Gtk.Button):
-        self.location = self.location_entry.get_text()
-        output_type_iter = self.output_type_combo_box.get_active_iter()
-        if output_type_iter is not None:
-            model = self.output_type_combo_box.get_model()
-            self.output_type = model[output_type_iter][0]
-        print(self.location)
-        print(self.output_type)
-
-    def add_filters(self, dialog: Gtk.FileChooserDialog):
+    def add_filters(self, dialog: Gtk.FileChooserDialog) -> None:
         filter_blend = Gtk.FileFilter()
         filter_blend.set_name(".blend files")
         filter_blend.add_pattern("*.blend")
         filter_blend.add_pattern("*.blend1")
         dialog.add_filter(filter_blend)
+
+    def on_render_clicked(self, button: Gtk.Button) -> None:
+        self.location = self.location_entry.get_text()
+        output_type_iter = self.output_type_combo_box.get_active_iter()
+        if output_type_iter is not None:
+            model = self.output_type_combo_box.get_model()
+            self.output_type = model[output_type_iter][0]
+        self.render()
+
+    def render(self) -> None:
+        os.chdir(os.path.dirname(self.location))
+        if self.output_type == "Animation":
+            print("Rendering animation of {}".format(self.location))
+            os.system("blender -b {} -a".format(os.path.basename(self.location)))
+        elif self.output_type == "Single Frame":
+            print("Rendering frame 1 of {}".format(self.location))
+            os.system("blender -b {} -f 1".format(os.path.basename(self.location)))
+
+        print("Rendering complete!")
+        os.system("notify-send 'Rendering {} complete. Shutting down in 30 seconds'".format(self.location))
 
 
 main_window = MainWindow()

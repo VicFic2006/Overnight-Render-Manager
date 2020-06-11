@@ -2,24 +2,24 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-from typing import List
+from typing import Union, List
 
 class NumberEntry(Gtk.Entry):
     def __init__(self):
         Gtk.Entry.__init__(self)
         self.connect("changed", self.on_changed)
 
-    def on_changed(self, *args):
+    def on_changed(self, *args) -> None:
         text = self.get_text().strip()
         self.set_text("".join([i for i in text if i in "0123456789"]))
 
 
-def create_label(text: str):
+def create_label(text: str) -> Gtk.Label:
     label = Gtk.Label(label=text)
     return label
 
 
-def create_entry(numbers_only=True):
+def create_entry(numbers_only: bool=True) -> Union[NumberEntry, Gtk.Entry]:
     if numbers_only:
         entry = NumberEntry()
     else:
@@ -27,12 +27,12 @@ def create_entry(numbers_only=True):
     return entry
 
 
-def create_button(text: str):
+def create_button(text: str) -> Gtk.Button:
     button = Gtk.Button(label=text)
     return button
 
 
-def create_file_chooser_dialog(self):
+def create_file_chooser_dialog(self) -> Gtk.FileChooserDialog:
     file_chooser_dialog = Gtk.FileChooserDialog(
         "Choose a .blend file",
         self,
@@ -47,7 +47,7 @@ def create_file_chooser_dialog(self):
     return file_chooser_dialog
 
 
-def create_combo_box(labels: List[str]):
+def create_combo_box(labels: List[str]) -> Gtk.ComboBox:
     model = Gtk.ListStore(str)
     combo_box = Gtk.ComboBox.new_with_model(model)
     for i in range(len(labels)):

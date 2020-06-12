@@ -1,4 +1,5 @@
 import gi
+
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
@@ -6,8 +7,9 @@ import os
 import time
 
 from widgets import create_label, create_entry, create_button, \
-create_file_chooser_dialog, create_combo_box, create_combo_box_with_entry, \
-create_check_button
+    create_file_chooser_dialog, create_combo_box, create_combo_box_with_entry, \
+    create_check_button
+
 
 class MainWindow(Gtk.Window):
     grid = Gtk.Grid(column_spacing=12, row_spacing=12)
@@ -24,14 +26,13 @@ class MainWindow(Gtk.Window):
     output_file = ""
     shutdown = False
 
-
     def __init__(self):
         super(MainWindow, self).__init__()
         self.set_default_size(600, 800)
         self.set_title("Blender Overnight Renderer")
         self.set_border_width(20)
         self.set_position(Gtk.WindowPosition.CENTER)
-        
+
         self.create_content()
 
     def create_content(self) -> None:
@@ -92,7 +93,9 @@ class MainWindow(Gtk.Window):
         self.grid.attach(render_button, 0, 5, 3, 1)
 
     def on_blend_file_clicked(self, button: Gtk.Button) -> None:
-        file_chooser_dialog = create_file_chooser_dialog(self, Gtk.FileChooserAction.OPEN, Gtk.STOCK_OPEN)
+        file_chooser_dialog = create_file_chooser_dialog(
+            self, Gtk.FileChooserAction.OPEN, Gtk.STOCK_OPEN
+        )
         self.add_blend_filters(file_chooser_dialog)
 
         response = file_chooser_dialog.run()
@@ -105,7 +108,9 @@ class MainWindow(Gtk.Window):
         file_chooser_dialog.destroy()
 
     def on_output_file_clicked(self, button: Gtk.Button) -> None:
-        file_chooser_dialog = create_file_chooser_dialog(self, Gtk.FileChooserAction.SAVE, Gtk.STOCK_SAVE)
+        file_chooser_dialog = create_file_chooser_dialog(
+            self, Gtk.FileChooserAction.SAVE, Gtk.STOCK_SAVE
+        )
         file_chooser_dialog.set_current_name("Render")
 
         response = file_chooser_dialog.run()
@@ -144,19 +149,35 @@ class MainWindow(Gtk.Window):
         os.chdir(os.path.dirname(self.blend_file))
         if self.output_type == "Animation":
             print("Rendering animation of {} \n".format(self.blend_file))
-            os.system("blender -b {} -o {} -F {} -a".format(os.path.basename(self.blend_file), self.output_file, self.output_format))
+            os.system(
+                "blender -b {} -o {} -F {} -a".format(
+                    os.path.basename(self.blend_file), self.output_file,
+                    self.output_format
+                )
+            )
         elif self.output_type == "Single Frame":
             print("Rendering frame 1 of {} \n".format(self.blend_file))
-            os.system("blender -b {} -o {} -F {} -f 1".format(os.path.basename(self.blend_file), self.output_file, self.output_format))
+            os.system(
+                "blender -b {} -o {} -F {} -f 1".format(
+                    os.path.basename(self.blend_file), self.output_file,
+                    self.output_format
+                )
+            )
 
         print("Rendering complete!")
         if self.shutdown:
-            os.system("notify-send 'Rendering {} complete. Shutting down in 30 seconds'".format(os.path.basename(self.blend_file)))
+            os.system(
+                "notify-send 'Rendering {} complete. Shutting down in 30 seconds'"
+                .format(os.path.basename(self.blend_file))
+            )
             time.sleep(30)
             print("Shutting down...")
             os.system("poweroff")
         else:
-            os.system("notify-send 'Rendering {} complete.'".format(os.path.basename(self.blend_file)))
+            os.system(
+                "notify-send 'Rendering {} complete.'"
+                .format(os.path.basename(self.blend_file))
+            )
 
 
 main_window = MainWindow()

@@ -7,20 +7,21 @@ import os
 import time
 
 from widgets import create_label, create_entry, create_button, \
-    create_file_chooser_dialog, create_combo_box, create_combo_box_with_entry, \
-    create_check_button
+    create_file_chooser_dialog, create_combo_box, create_check_button
 
 
 class MainWindow(Gtk.Window):
     grid = Gtk.Grid(column_spacing=12, row_spacing=12)
 
     blend_file_entry = None
+    render_engine_combo_box = None
     output_type_combo_box = None
     output_format_combo_box = None
     output_file_entry = None
     shutdown_check_button = None
 
     blend_file = ""
+    render_engine = ""
     output_type = ""
     output_format = ""
     output_file = ""
@@ -41,11 +42,18 @@ class MainWindow(Gtk.Window):
         blend_file_button = create_button("Browse")
         blend_file_button.connect("clicked", self.on_blend_file_clicked)
 
-        output_type_label = create_label("Choose an output type")
+        render_engine_label = create_label("Render Engine")
+        engine_store = Gtk.ListStore(str, str)
+        engine_store.append(["Eevee", "BLENDER_EEVEE"])
+        engine_store.append(["Workbench", "BLENDER_WORKBENCH"])
+        engine_store.append(["Cycles", "CYCLES"])
+        self.render_engine_combo_box = create_combo_box(model=engine_store)
+
+        output_type_label = create_label("Output type")
         output_types = ["Animation", "Single Frame"]
         self.output_type_combo_box = create_combo_box(labels=output_types)
 
-        output_format_label = create_label("Choose an output format")
+        output_format_label = create_label("Output format")
         format_store = Gtk.ListStore(str, str)
         format_store.append(["BMP", "BMP"])
         format_store.append(["Iris", "IRIS"])
@@ -62,7 +70,7 @@ class MainWindow(Gtk.Window):
         format_store.append(["AVI JPEG", "AVIJPEG"])
         format_store.append(["AVI Raw", "AVIRAW"])
         format_store.append(["FFmpeg video", "MPEG"])
-        self.output_format_combo_box = create_combo_box_with_entry(format_store)
+        self.output_format_combo_box = create_combo_box(model=format_store)
 
         output_file_label = create_label("Output path")
         self.output_file_entry = create_entry(False)
@@ -81,16 +89,18 @@ class MainWindow(Gtk.Window):
         self.grid.attach(blend_file_label, 0, 0, 1, 1)
         self.grid.attach(self.blend_file_entry, 1, 0, 1, 1)
         self.grid.attach(blend_file_button, 2, 0, 1, 1)
-        self.grid.attach(output_type_label, 0, 1, 1, 1)
-        self.grid.attach(self.output_type_combo_box, 1, 1, 1, 1)
-        self.grid.attach(output_format_label, 0, 2, 1, 1)
-        self.grid.attach(self.output_format_combo_box, 1, 2, 1, 1)
-        self.grid.attach(output_file_label, 0, 3, 1, 1)
-        self.grid.attach(self.output_file_entry, 1, 3, 1, 1)
-        self.grid.attach(output_file_button, 2, 3, 1, 1)
-        self.grid.attach(shutdown_label, 0, 4, 1, 1)
-        self.grid.attach(self.shutdown_check_button, 1, 4, 1, 1)
-        self.grid.attach(render_button, 0, 5, 3, 1)
+        self.grid.attach(render_engine_label, 0, 1, 1, 1)
+        self.grid.attach(self.render_engine_combo_box, 1, 1, 1, 1)
+        self.grid.attach(output_type_label, 0, 2, 1, 1)
+        self.grid.attach(self.output_type_combo_box, 1, 2, 1, 1)
+        self.grid.attach(output_format_label, 0, 3, 1, 1)
+        self.grid.attach(self.output_format_combo_box, 1, 3, 1, 1)
+        self.grid.attach(output_file_label, 0, 4, 1, 1)
+        self.grid.attach(self.output_file_entry, 1, 4, 1, 1)
+        self.grid.attach(output_file_button, 2, 4, 1, 1)
+        self.grid.attach(shutdown_label, 0, 5, 1, 1)
+        self.grid.attach(self.shutdown_check_button, 1, 5, 1, 1)
+        self.grid.attach(render_button, 0, 6, 3, 1)
 
     def on_blend_file_clicked(self, button: Gtk.Button) -> None:
         file_chooser_dialog = create_file_chooser_dialog(
@@ -132,17 +142,22 @@ class MainWindow(Gtk.Window):
     def on_render_clicked(self, button: Gtk.Button) -> None:
         self.blend_file = self.blend_file_entry.get_text()
 
+        render_engine_iter = self.render_engine_combo_box.get_active_iter()
+        render_engine_model = self.render_engine_combo_box.get_model()
+        self.render_engine = render_engine_model[render_engine_iter][1]
+
         output_type_iter = self.output_type_combo_box.get_active_iter()
-        model = self.output_type_combo_box.get_model()
-        self.output_type = model[output_type_iter][0]
+        output_type_model = self.output_type_combo_box.get_model()
+        self.output_type = output_type_model[output_type_iter][0]
 
         output_format_iter = self.output_format_combo_box.get_active_iter()
-        model = self.output_format_combo_box.get_model()
-        self.output_format = model[output_format_iter][1]
+        output_format_model = self.output_format_combo_box.get_model()
+        self.output_format = output_format_model[output_format_iter][1]
 
-        print(self.output_format)
         self.output_file = self.output_file_entry.get_text()
+
         self.shutdown = self.shutdown_check_button.get_active()
+
         self.render()
 
     def render(self) -> None:
@@ -150,17 +165,17 @@ class MainWindow(Gtk.Window):
         if self.output_type == "Animation":
             print("Rendering animation of {} \n".format(self.blend_file))
             os.system(
-                "blender -b {} -o {} -F {} -a".format(
-                    os.path.basename(self.blend_file), self.output_file,
-                    self.output_format
+                "blender -b {} -E {} -o {} -F {} -a".format(
+                    os.path.basename(self.blend_file), self.render_engine,
+                    self.output_file, self.output_format
                 )
             )
         elif self.output_type == "Single Frame":
             print("Rendering frame 1 of {} \n".format(self.blend_file))
             os.system(
-                "blender -b {} -o {} -F {} -f 1".format(
-                    os.path.basename(self.blend_file), self.output_file,
-                    self.output_format
+                "blender -b {} -E {} -o {} -F {} -f 1".format(
+                    os.path.basename(self.blend_file), self.render_engine,
+                    self.output_file, self.output_format
                 )
             )
 

@@ -16,6 +16,7 @@ class NumberEntry(Gtk.Entry):
 
 def create_label(text: str) -> Gtk.Label:
     label = Gtk.Label(label=text)
+    label.set_halign(Gtk.Align.START)
     return label
 
 
@@ -24,6 +25,7 @@ def create_entry(numbers_only: bool=True) -> Union[NumberEntry, Gtk.Entry]:
         entry = NumberEntry()
     else:
         entry = Gtk.Entry()
+    entry.set_width_chars(30)
     return entry
 
 
@@ -32,15 +34,15 @@ def create_button(text: str) -> Gtk.Button:
     return button
 
 
-def create_file_chooser_dialog(self) -> Gtk.FileChooserDialog:
+def create_file_chooser_dialog(self, action: Gtk.FileChooserAction, button: Gtk) -> Gtk.FileChooserDialog:
     file_chooser_dialog = Gtk.FileChooserDialog(
-        "Choose a .blend file",
+        "",
         self,
-        Gtk.FileChooserAction.OPEN,
+        action,
         (
             Gtk.STOCK_CANCEL,
             Gtk.ResponseType.CANCEL,
-            Gtk.STOCK_OPEN,
+            button,
             Gtk.ResponseType.OK
         )
     )

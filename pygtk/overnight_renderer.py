@@ -121,12 +121,12 @@ class MainWindow(Gtk.Window):
 
         print("Rendering complete!")
         if self.shutdown:
-            os.system("notify-send 'Rendering {} complete. Shutting down in 30 seconds'".format(self.blend_file))
+            os.system("notify-send 'Rendering {} complete. Shutting down in 30 seconds'".format(os.path.basename(self.blend_file)))
             time.sleep(30)
             print("Shutting down...")
             os.system("poweroff")
         else:
-            os.system("notify-send 'Rendering {} complete.'".format(self.blend_file))
+            os.system("notify-send 'Rendering {} complete.'".format(os.path.basename(self.blend_file)))
 
 
 main_window = MainWindow()

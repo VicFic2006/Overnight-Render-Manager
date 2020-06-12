@@ -20,7 +20,7 @@ class MainWindow(Gtk.Window):
     end_frame_entry = None
     output_format_combo_box = None
     output_file_entry = None
-    shutdown_check_button = None
+    after_rendering_combo_box = None
 
     blend_file = ""
     render_engine = ""
@@ -29,11 +29,10 @@ class MainWindow(Gtk.Window):
     end_frame = 250
     output_format = ""
     output_file = ""
-    shutdown = False
+    after_rendering = ""
 
     def __init__(self):
         super(MainWindow, self).__init__()
-        self.set_default_size(600, 800)
         self.set_title("Blender Overnight Renderer")
         self.set_border_width(20)
         self.set_position(Gtk.WindowPosition.CENTER)
@@ -90,8 +89,11 @@ class MainWindow(Gtk.Window):
         output_file_button = create_button("Browse")
         output_file_button.connect("clicked", self.on_output_file_clicked)
 
-        shutdown_label = create_label("Shutdown after rendering is finished")
-        self.shutdown_check_button = create_check_button()
+        after_rendering_label = create_label("After rendering is finished")
+        after_rendering_options = ["Do nothing", "Suspend", "Shutdown"]
+        self.after_rendering_combo_box = create_combo_box(
+            labels=after_rendering_options
+        )
 
         render_button = create_button("Render")
         render_button.connect("clicked", self.on_render_clicked)
@@ -115,8 +117,8 @@ class MainWindow(Gtk.Window):
         self.grid.attach(output_file_label, 0, 6, 1, 1)
         self.grid.attach(self.output_file_entry, 1, 6, 1, 1)
         self.grid.attach(output_file_button, 2, 6, 1, 1)
-        self.grid.attach(shutdown_label, 0, 7, 1, 1)
-        self.grid.attach(self.shutdown_check_button, 1, 7, 1, 1)
+        self.grid.attach(after_rendering_label, 0, 7, 1, 1)
+        self.grid.attach(self.after_rendering_combo_box, 1, 7, 1, 1)
         self.grid.attach(render_button, 0, 8, 3, 1)
 
     def on_blend_file_clicked(self, button: Gtk.Button) -> None:
@@ -187,7 +189,9 @@ class MainWindow(Gtk.Window):
 
         self.output_file = self.output_file_entry.get_text()
 
-        self.shutdown = self.shutdown_check_button.get_active()
+        after_rendering_iter = self.after_rendering_combo_box.get_active_iter()
+        after_rendering_model = self.after_rendering_combo_box.get_model()
+        self.after_rendering = after_rendering_model[after_rendering_iter][0]
 
         self.render()
 
@@ -212,7 +216,20 @@ class MainWindow(Gtk.Window):
             )
 
         print("Rendering complete!")
-        if self.shutdown:
+        if self.after_rendering == "Do nothing":
+            os.system(
+                "notify-send 'Rendering {} complete.'"
+                .format(os.path.basename(self.blend_file))
+            )
+        elif self.after_rendering == "Suspend":
+            os.system(
+                "notify-send 'Rendering {} complete. Suspending in 30 seconds'"
+                .format(os.path.basename(self.blend_file))
+            )
+            time.sleep(30)
+            print("Suspending...")
+            os.system("systemctl suspend")
+        elif self.after_rendering == "Shutdown":
             os.system(
                 "notify-send 'Rendering {} complete. Shutting down in 30 seconds'"
                 .format(os.path.basename(self.blend_file))
@@ -220,12 +237,7 @@ class MainWindow(Gtk.Window):
             time.sleep(30)
             print("Shutting down...")
             os.system("poweroff")
-        else:
-            os.system(
-                "notify-send 'Rendering {} complete.'"
-                .format(os.path.basename(self.blend_file))
-            )
-
+            
 
 main_window = MainWindow()
 main_window.connect("delete-event", Gtk.main_quit)

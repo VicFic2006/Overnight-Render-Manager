@@ -6,18 +6,21 @@ import os
 import time
 
 from widgets import create_label, create_entry, create_button, \
-create_file_chooser_dialog, create_combo_box, create_check_button
+create_file_chooser_dialog, create_combo_box, create_combo_box_with_entry, \
+create_check_button
 
 class MainWindow(Gtk.Window):
     grid = Gtk.Grid(column_spacing=12, row_spacing=12)
 
     blend_file_entry = None
     output_type_combo_box = None
-    shutdown_check_button = None
+    output_format_combo_box = None
     output_file_entry = None
+    shutdown_check_button = None
 
     blend_file = ""
     output_type = ""
+    output_format = ""
     output_file = ""
     shutdown = False
 
@@ -39,7 +42,26 @@ class MainWindow(Gtk.Window):
 
         output_type_label = create_label("Choose an output type")
         output_types = ["Animation", "Single Frame"]
-        self.output_type_combo_box = create_combo_box(output_types)
+        self.output_type_combo_box = create_combo_box(labels=output_types)
+
+        output_format_label = create_label("Choose an output format")
+        format_store = Gtk.ListStore(str, str)
+        format_store.append(["BMP", "BMP"])
+        format_store.append(["Iris", "IRIS"])
+        format_store.append(["PNG", "PNG"])
+        format_store.append(["JPEG", "JPEG"])
+        format_store.append(["Targa", "TGA"])
+        format_store.append(["Targe Raw", "RAWTGA"])
+        format_store.append(["Cineon", "CINEON"])
+        format_store.append(["DPX", "DPX"])
+        format_store.append(["OpenEXR Multilayer", "OPEN_EXR_MULTILAYER"])
+        format_store.append(["OpenEXR", "OPEN_EXR"])
+        format_store.append(["Radiance HDR", "HDR"])
+        format_store.append(["TIFF", "TIFF"])
+        format_store.append(["AVI JPEG", "AVIJPEG"])
+        format_store.append(["AVI Raw", "AVIRAW"])
+        format_store.append(["FFmpeg video", "MPEG"])
+        self.output_format_combo_box = create_combo_box_with_entry(format_store)
 
         output_file_label = create_label("Output path")
         self.output_file_entry = create_entry(False)
@@ -60,12 +82,14 @@ class MainWindow(Gtk.Window):
         self.grid.attach(blend_file_button, 2, 0, 1, 1)
         self.grid.attach(output_type_label, 0, 1, 1, 1)
         self.grid.attach(self.output_type_combo_box, 1, 1, 1, 1)
-        self.grid.attach(output_file_label, 0, 2, 1, 1)
-        self.grid.attach(self.output_file_entry, 1, 2, 1, 1)
-        self.grid.attach(output_file_button, 2, 2, 1, 1)
-        self.grid.attach(shutdown_label, 0, 3, 1, 1)
-        self.grid.attach(self.shutdown_check_button, 1, 3, 1, 1)
-        self.grid.attach(render_button, 0, 4, 3, 1)
+        self.grid.attach(output_format_label, 0, 2, 1, 1)
+        self.grid.attach(self.output_format_combo_box, 1, 2, 1, 1)
+        self.grid.attach(output_file_label, 0, 3, 1, 1)
+        self.grid.attach(self.output_file_entry, 1, 3, 1, 1)
+        self.grid.attach(output_file_button, 2, 3, 1, 1)
+        self.grid.attach(shutdown_label, 0, 4, 1, 1)
+        self.grid.attach(self.shutdown_check_button, 1, 4, 1, 1)
+        self.grid.attach(render_button, 0, 5, 3, 1)
 
     def on_blend_file_clicked(self, button: Gtk.Button) -> None:
         file_chooser_dialog = create_file_chooser_dialog(self, Gtk.FileChooserAction.OPEN, Gtk.STOCK_OPEN)
@@ -102,10 +126,16 @@ class MainWindow(Gtk.Window):
 
     def on_render_clicked(self, button: Gtk.Button) -> None:
         self.blend_file = self.blend_file_entry.get_text()
+
         output_type_iter = self.output_type_combo_box.get_active_iter()
-        if output_type_iter is not None:
-            model = self.output_type_combo_box.get_model()
-            self.output_type = model[output_type_iter][0]
+        model = self.output_type_combo_box.get_model()
+        self.output_type = model[output_type_iter][0]
+
+        output_format_iter = self.output_format_combo_box.get_active_iter()
+        model = self.output_format_combo_box.get_model()
+        self.output_format = model[output_format_iter][1]
+
+        print(self.output_format)
         self.output_file = self.output_file_entry.get_text()
         self.shutdown = self.shutdown_check_button.get_active()
         self.render()
@@ -114,10 +144,10 @@ class MainWindow(Gtk.Window):
         os.chdir(os.path.dirname(self.blend_file))
         if self.output_type == "Animation":
             print("Rendering animation of {} \n".format(self.blend_file))
-            os.system("blender -b {} -o {} -a".format(os.path.basename(self.blend_file), self.output_file))
+            os.system("blender -b {} -o {} -F {} -a".format(os.path.basename(self.blend_file), self.output_file, self.output_format))
         elif self.output_type == "Single Frame":
             print("Rendering frame 1 of {} \n".format(self.blend_file))
-            os.system("blender -b {} -o {} -f 1".format(os.path.basename(self.blend_file), self.output_file))
+            os.system("blender -b {} -o {} -F {} -f 1".format(os.path.basename(self.blend_file), self.output_file, self.output_format))
 
         print("Rendering complete!")
         if self.shutdown:

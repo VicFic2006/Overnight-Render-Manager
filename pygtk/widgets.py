@@ -49,11 +49,21 @@ def create_file_chooser_dialog(self, action: Gtk.FileChooserAction, button: Gtk)
     return file_chooser_dialog
 
 
-def create_combo_box(labels: List[str]) -> Gtk.ComboBox:
-    model = Gtk.ListStore(str)
+def create_combo_box(model: Gtk.ListStore=None, labels: List[str]=None) -> Gtk.ComboBox:
+    if model is None:
+        model = Gtk.ListStore(str)
+    if labels is not None:
+        for i in range(len(labels)):
+            model.append([labels[i]])
     combo_box = Gtk.ComboBox.new_with_model(model)
-    for i in range(len(labels)):
-        model.append([labels[i]])
+    renderer_text = Gtk.CellRendererText()
+    combo_box.pack_start(renderer_text, True)
+    combo_box.add_attribute(renderer_text, "text", 0)
+    combo_box.set_active(0)
+    return combo_box
+
+def create_combo_box_with_entry(model: Gtk.ListStore) -> Gtk.ComboBox:
+    combo_box = Gtk.ComboBox.new_with_model(model)
     renderer_text = Gtk.CellRendererText()
     combo_box.pack_start(renderer_text, True)
     combo_box.add_attribute(renderer_text, "text", 0)

@@ -15,6 +15,8 @@ class MainWindow(Gtk.Window):
 
     blend_file_entry = None
     render_engine_combo_box = None
+    render_device_combo_box = None
+    render_samples_entry = None
     output_type_combo_box = None
     start_frame_entry = None
     end_frame_entry = None
@@ -24,6 +26,8 @@ class MainWindow(Gtk.Window):
 
     blend_file = ""
     render_engine = ""
+    render_device = ""
+    render_samples = 128
     output_type = ""
     start_frame = 1
     end_frame = 250
@@ -51,6 +55,14 @@ class MainWindow(Gtk.Window):
         engine_store.append(["Workbench", "BLENDER_WORKBENCH"])
         engine_store.append(["Cycles", "CYCLES"])
         self.render_engine_combo_box = create_combo_box(model=engine_store)
+
+        render_device_label = create_label("Device")
+        render_devices = ["CPU", "GPU"]
+        self.render_device_combo_box = create_combo_box(labels=render_devices)
+
+        render_samples_label = create_label("Samples")
+        self.render_samples_entry = create_entry(True)
+        self.render_samples_entry.set_text("128")
 
         output_type_label = create_label("Output type")
         output_types = ["Animation", "Single frame"]
@@ -106,20 +118,24 @@ class MainWindow(Gtk.Window):
         self.grid.attach(blend_file_button, 2, 0, 1, 1)
         self.grid.attach(render_engine_label, 0, 1, 1, 1)
         self.grid.attach(self.render_engine_combo_box, 1, 1, 1, 1)
-        self.grid.attach(output_type_label, 0, 2, 1, 1)
-        self.grid.attach(self.output_type_combo_box, 1, 2, 1, 1)
-        self.grid.attach(start_frame_label, 0, 3, 1, 1)
-        self.grid.attach(self.start_frame_entry, 1, 3, 1, 1)
-        self.grid.attach(end_frame_label, 0, 4, 1, 1)
-        self.grid.attach(self.end_frame_entry, 1, 4, 1, 1)
-        self.grid.attach(output_format_label, 0, 5, 1, 1)
-        self.grid.attach(self.output_format_combo_box, 1, 5, 1, 1)
-        self.grid.attach(output_file_label, 0, 6, 1, 1)
-        self.grid.attach(self.output_file_entry, 1, 6, 1, 1)
-        self.grid.attach(output_file_button, 2, 6, 1, 1)
-        self.grid.attach(after_rendering_label, 0, 7, 1, 1)
-        self.grid.attach(self.after_rendering_combo_box, 1, 7, 1, 1)
-        self.grid.attach(render_button, 0, 8, 3, 1)
+        self.grid.attach(render_device_label, 0, 2, 1, 1)
+        self.grid.attach(self.render_device_combo_box, 1, 2, 1, 1)
+        self.grid.attach(render_samples_label, 0, 3, 1, 1)
+        self.grid.attach(self.render_samples_entry, 1, 3, 1, 1)
+        self.grid.attach(output_type_label, 0, 4, 1, 1)
+        self.grid.attach(self.output_type_combo_box, 1, 4, 1, 1)
+        self.grid.attach(start_frame_label, 0, 5, 1, 1)
+        self.grid.attach(self.start_frame_entry, 1, 5, 1, 1)
+        self.grid.attach(end_frame_label, 0, 6, 1, 1)
+        self.grid.attach(self.end_frame_entry, 1, 6, 1, 1)
+        self.grid.attach(output_format_label, 0, 7, 1, 1)
+        self.grid.attach(self.output_format_combo_box, 1, 7, 1, 1)
+        self.grid.attach(output_file_label, 0, 8, 1, 1)
+        self.grid.attach(self.output_file_entry, 1, 8, 1, 1)
+        self.grid.attach(output_file_button, 2, 8, 1, 1)
+        self.grid.attach(after_rendering_label, 0, 9, 1, 1)
+        self.grid.attach(self.after_rendering_combo_box, 1, 9, 1, 1)
+        self.grid.attach(render_button, 0, 10, 3, 1)
 
     def on_blend_file_clicked(self, button: Gtk.Button) -> None:
         file_chooser_dialog = create_file_chooser_dialog(
@@ -175,6 +191,14 @@ class MainWindow(Gtk.Window):
         render_engine_model = self.render_engine_combo_box.get_model()
         self.render_engine = render_engine_model[render_engine_iter][1]
 
+        render_device_iter = self.render_device_combo_box.get_active_iter()
+        render_device_model = self.render_device_combo_box.get_model()
+        self.render_device = render_device_model[render_device_iter][0]
+        print(self.render_device)
+
+        self.render_samples = int(self.render_samples_entry.get_text())
+        print(self.render_samples)
+
         output_type_iter = self.output_type_combo_box.get_active_iter()
         output_type_model = self.output_type_combo_box.get_model()
         self.output_type = output_type_model[output_type_iter][0]
@@ -200,18 +224,27 @@ class MainWindow(Gtk.Window):
         if self.output_type == "Animation":
             print("Rendering animation of {} \n".format(self.blend_file))
             os.system(
-                "blender -b {} -E {} -o {} -F {} -s {} -e {} -a".format(
+                "blender -b {} -E {} -o {} -F {} -s {} -e {} "
+                "--python-expr 'import bpy; bpy.context.scene.cycles.device = \"{}\"; "
+                "bpy.context.scene.cycles.samples = {}' "
+                "-a"
+                .format(
                     os.path.basename(self.blend_file), self.render_engine,
                     self.output_file, self.output_format, self.start_frame,
-                    self.end_frame
+                    self.end_frame, self.render_device, self.render_samples
                 )
             )
         elif self.output_type == "Single frame":
             print("Rendering frame 1 of {} \n".format(self.blend_file))
             os.system(
-                "blender -b {} -E {} -o {} -F {} -f {}".format(
+                "blender -b {} -E {} -o {} -F {} "
+                "--python-expr 'import bpy; bpy.context.scene.cycles.device = \"{}\"; "
+                "bpy.context.scene.cycles.samples = {}' "
+                "-f {}"
+                .format(
                     os.path.basename(self.blend_file), self.render_engine,
-                    self.output_file, self.output_format, self.start_frame
+                    self.output_file, self.output_format, self.render_device,
+                    self.render_samples, self.start_frame
                 )
             )
 
@@ -237,7 +270,7 @@ class MainWindow(Gtk.Window):
             time.sleep(30)
             print("Shutting down...")
             os.system("poweroff")
-            
+
 
 main_window = MainWindow()
 main_window.connect("delete-event", Gtk.main_quit)

@@ -59,11 +59,11 @@ class MainWindow(Gtk.Window):
         engine_store.append(["Cycles", "CYCLES"])
         self.render_engine_combo_box = create_combo_box(model=engine_store)
 
-        render_device_label = create_label("Device")
+        render_device_label = create_label("Cycles Render Device")
         render_devices = ["CPU", "GPU"]
         self.render_device_combo_box = create_combo_box(labels=render_devices)
 
-        render_samples_label = create_label("Samples")
+        render_samples_label = create_label("Cycles Samples")
         self.render_samples_entry = create_entry(True)
         self.render_samples_entry.set_text("128")
 

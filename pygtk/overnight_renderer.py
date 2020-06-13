@@ -1,7 +1,8 @@
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+gi.require_version("Notify", "0.7")
+from gi.repository import Gtk, Notify
 
 import os
 import time
@@ -229,7 +230,6 @@ class MainWindow(Gtk.Window):
     def render(self) -> None:
         os.chdir(os.path.dirname(self.blend_file))
         if self.output_type == "Animation":
-            print("Rendering animation of {} \n".format(self.blend_file))
             os.system(
                 "blender -b {} -E {} -o {} -F {} -s {} -e {} "
                 "--python-expr 'import bpy; bpy.context.scene.cycles.device = \"{}\"; "
@@ -243,7 +243,6 @@ class MainWindow(Gtk.Window):
                 )
             )
         elif self.output_type == "Single frame":
-            print("Rendering frame 1 of {} \n".format(self.blend_file))
             os.system(
                 "blender -b {} -E {} -o {} -F {} "
                 "--python-expr 'import bpy; bpy.context.scene.cycles.device = \"{}\"; "
@@ -257,24 +256,53 @@ class MainWindow(Gtk.Window):
             )
 
         print("Rendering complete!")
+
+        Notify.init("Overnight Renderer")
+
         if self.after_rendering == "Do nothing":
-            os.system(
-                "notify-send 'Rendering {} complete.'"
+            notification = Notify.Notification.new(
+                "Rendering {} finished"
                 .format(os.path.basename(self.blend_file))
             )
+
+            def open_file(notification: Notify.Notification, action_id: str):
+                os.system("xdg-open {}".format(os.path.dirname(self.output_file)))
+
+            notification.add_action("action_click", "Open Render", open_file)
+            notification.show()
+            Gtk.main()
+
         elif self.after_rendering == "Suspend":
-            os.system(
-                "notify-send 'Rendering {} complete. Suspending in 30 seconds'"
-                .format(os.path.basename(self.blend_file))
+            notification = Notify.Notification.new(
+                "Rendering {} finished"
+                .format(os.path.basename(self.blend_file)),
+                "Suspending down in 30 seconds!"
             )
+
+            def open_file(notification: Notify.Notification, action_id: str):
+                os.system("xdg-open {}".format(os.path.dirname(self.output_file)))
+
+            notification.add_action("action_click", "Open Render", open_file)
+            notification.show()
+            Gtk.main()
+
             time.sleep(30)
             print("Suspending...")
             os.system("systemctl suspend")
         elif self.after_rendering == "Shutdown":
-            os.system(
-                "notify-send 'Rendering {} complete. Shutting down in 30 seconds'"
-                .format(os.path.basename(self.blend_file))
+            notification = Notify.Notification.new(
+                "Rendering {} finished"
+                .format(os.path.basename(self.blend_file)),
+                "Shutting down in 30 seconds!"
             )
+
+            def open_file(notification: Notify.Notification, action_id: str):
+                os.system("xdg-open {}".format(os.path.dirname(self.output_file)))
+
+            notification.add_action("action_click", "Open Render", open_file)
+            notification.show()
+            Gtk.main()
+
             time.sleep(30)
             print("Shutting down...")
             os.system("poweroff")

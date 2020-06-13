@@ -22,6 +22,7 @@ class MainWindow(Gtk.Window):
     end_frame_entry = None
     output_format_combo_box = None
     output_file_entry = None
+    python_expressions_entry = None
     after_rendering_combo_box = None
 
     blend_file = ""
@@ -33,6 +34,7 @@ class MainWindow(Gtk.Window):
     end_frame = 250
     output_format = ""
     output_file = ""
+    python_expressions = ""
     after_rendering = ""
 
     def __init__(self):
@@ -101,6 +103,9 @@ class MainWindow(Gtk.Window):
         output_file_button = create_button("Browse")
         output_file_button.connect("clicked", self.on_output_file_clicked)
 
+        python_expressions_label = create_label("Python expressions")
+        self.python_expressions_entry = create_entry(False)
+
         after_rendering_label = create_label("After rendering is finished")
         after_rendering_options = ["Do nothing", "Suspend", "Shutdown"]
         self.after_rendering_combo_box = create_combo_box(
@@ -133,9 +138,11 @@ class MainWindow(Gtk.Window):
         self.grid.attach(output_file_label, 0, 8, 1, 1)
         self.grid.attach(self.output_file_entry, 1, 8, 1, 1)
         self.grid.attach(output_file_button, 2, 8, 1, 1)
-        self.grid.attach(after_rendering_label, 0, 9, 1, 1)
-        self.grid.attach(self.after_rendering_combo_box, 1, 9, 1, 1)
-        self.grid.attach(render_button, 0, 10, 3, 1)
+        self.grid.attach(python_expressions_label, 0, 9, 1, 1)
+        self.grid.attach(self.python_expressions_entry, 1, 9, 1, 1)
+        self.grid.attach(after_rendering_label, 0, 10, 1, 1)
+        self.grid.attach(self.after_rendering_combo_box, 1, 10, 1, 1)
+        self.grid.attach(render_button, 0, 11, 3, 1)
 
     def on_blend_file_clicked(self, button: Gtk.Button) -> None:
         file_chooser_dialog = create_file_chooser_dialog(
@@ -194,10 +201,8 @@ class MainWindow(Gtk.Window):
         render_device_iter = self.render_device_combo_box.get_active_iter()
         render_device_model = self.render_device_combo_box.get_model()
         self.render_device = render_device_model[render_device_iter][0]
-        print(self.render_device)
 
         self.render_samples = int(self.render_samples_entry.get_text())
-        print(self.render_samples)
 
         output_type_iter = self.output_type_combo_box.get_active_iter()
         output_type_model = self.output_type_combo_box.get_model()
@@ -213,6 +218,8 @@ class MainWindow(Gtk.Window):
 
         self.output_file = self.output_file_entry.get_text()
 
+        self.python_expressions = self.python_expressions_entry.get_text()
+
         after_rendering_iter = self.after_rendering_combo_box.get_active_iter()
         after_rendering_model = self.after_rendering_combo_box.get_model()
         self.after_rendering = after_rendering_model[after_rendering_iter][0]
@@ -226,12 +233,13 @@ class MainWindow(Gtk.Window):
             os.system(
                 "blender -b {} -E {} -o {} -F {} -s {} -e {} "
                 "--python-expr 'import bpy; bpy.context.scene.cycles.device = \"{}\"; "
-                "bpy.context.scene.cycles.samples = {}' "
+                "bpy.context.scene.cycles.samples = {}; {}' "
                 "-a"
                 .format(
                     os.path.basename(self.blend_file), self.render_engine,
                     self.output_file, self.output_format, self.start_frame,
-                    self.end_frame, self.render_device, self.render_samples
+                    self.end_frame, self.render_device, self.render_samples,
+                    self.python_expressions
                 )
             )
         elif self.output_type == "Single frame":
@@ -239,12 +247,12 @@ class MainWindow(Gtk.Window):
             os.system(
                 "blender -b {} -E {} -o {} -F {} "
                 "--python-expr 'import bpy; bpy.context.scene.cycles.device = \"{}\"; "
-                "bpy.context.scene.cycles.samples = {}' "
+                "bpy.context.scene.cycles.samples = {}; {}' "
                 "-f {}"
                 .format(
                     os.path.basename(self.blend_file), self.render_engine,
                     self.output_file, self.output_format, self.render_device,
-                    self.render_samples, self.start_frame
+                    self.render_samples, self.python_expressions, self.start_frame
                 )
             )
 

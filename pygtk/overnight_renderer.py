@@ -1,15 +1,13 @@
 import gi
 
 gi.require_version("Gtk", "3.0")
-gi.require_version("Notify", "0.7")
-from gi.repository import Gtk, Notify
+from gi.repository import Gtk
 
 import os
 import time
 
 from widgets import create_label, create_entry, create_button, \
     create_file_chooser_dialog, create_combo_box, create_check_button
-
 
 class MainWindow(Gtk.Window):
     grid = Gtk.Grid(column_spacing=12, row_spacing=12)
@@ -265,26 +263,15 @@ class MainWindow(Gtk.Window):
                 .format(os.path.basename(self.blend_file))
             )
 
-            def open_file(notification: Notify.Notification, action_id: str):
-                os.system("xdg-open {}".format(os.path.dirname(self.output_file)))
-
-            notification.add_action("action_click", "Open Render", open_file)
             notification.show()
-            Gtk.main()
-
         elif self.after_rendering == "Suspend":
             notification = Notify.Notification.new(
                 "Rendering {} finished"
                 .format(os.path.basename(self.blend_file)),
-                "Suspending down in 30 seconds!"
+                "Suspending in 30 seconds!"
             )
 
-            def open_file(notification: Notify.Notification, action_id: str):
-                os.system("xdg-open {}".format(os.path.dirname(self.output_file)))
-
-            notification.add_action("action_click", "Open Render", open_file)
             notification.show()
-            Gtk.main()
 
             time.sleep(30)
             print("Suspending...")
@@ -296,12 +283,7 @@ class MainWindow(Gtk.Window):
                 "Shutting down in 30 seconds!"
             )
 
-            def open_file(notification: Notify.Notification, action_id: str):
-                os.system("xdg-open {}".format(os.path.dirname(self.output_file)))
-
-            notification.add_action("action_click", "Open Render", open_file)
             notification.show()
-            Gtk.main()
 
             time.sleep(30)
             print("Shutting down...")

@@ -12,3 +12,6 @@ NOTE: This program is still in development.
     - python3
     - python-gobject
     - gtk3
+    
+## How to use:
+Run the overnight_render.py inside the pygtk folder.
